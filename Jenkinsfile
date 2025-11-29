@@ -17,15 +17,13 @@ pipeline {
 
     stages {
         stage('Build Node App') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    args '-u root'
-                }
-            }
             steps {
-                sh 'npm install'
-                sh 'npm run build --if-present'
+                script {
+                    docker.image('node:18-alpine').inside('-u root') {
+                        sh 'npm install'
+                        sh 'npm run build --if-present'
+                    }
+                }
             }
         }
 
