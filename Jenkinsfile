@@ -39,12 +39,11 @@ pipeline {
                     def orgArg = params.SONAR_ORGANIZATION ? "-Dsonar.organization=${params.SONAR_ORGANIZATION}" : ''
                     sh """
                         docker run --rm \\
-                          -e SONAR_HOST_URL=${params.SONAR_HOST_URL} \\
-                          -e SONAR_LOGIN=${SONAR_TOKEN} \\
                           -v "${workspace}":/usr/src \\
                           sonarsource/sonar-scanner-cli \\
                           -Dsonar.host.url=${params.SONAR_HOST_URL} \\
                           -Dsonar.projectKey=${params.SONAR_PROJECT_KEY} \\
+                          -Dsonar.login=${SONAR_TOKEN} \\
                           -Dsonar.sources=src \\
                           ${orgArg}
                     """
