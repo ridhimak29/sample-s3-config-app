@@ -17,12 +17,15 @@ pipeline {
     stages {
         stage('Build Node App') {
             steps {
-                sh """
-                    docker run --rm -u root \\
-                      -v "$PWD":/app -w /app \\
-                      node:18-alpine \\
-                      sh -c "npm install && npm run build --if-present"
-                """
+                script {
+                    def workspace = env.WORKSPACE ?: '.'
+                    sh """
+                        docker run --rm -u root \\
+                          -v "${workspace}":/app -w /app \\
+                          node:18-alpine \\
+                          sh -c "npm install && npm run build --if-present"
+                    """
+                }
             }
         }
 
