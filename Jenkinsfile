@@ -7,6 +7,7 @@ pipeline {
         string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS region where the S3 bucket resides')
         string(name: 'S3_BUCKET', defaultValue: 'sample-nodejs-s3-ridhima', description: 'Bucket containing the config JSON')
         string(name: 'S3_KEY', defaultValue: 'test.json', description: 'Key/path of the config JSON object')
+        string(name: 'SONAR_HOST_URL', defaultValue: 'http://host.docker.internal:9000', description: 'SonarQube server URL accessible from the Jenkins agent/container')
     }
 
     environment {
@@ -31,13 +32,18 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                sh """
-                    sonar-scanner \\
-                      -Dsonar.projectKey=${params.APP_NAME} \\
-                      -Dsonar.sources=src \\
-                      -Dsonar.host.url=http://localhost:9000 \\
-                      -Dsonar.login=${SONAR_TOKEN}
-                """
+                script {
+                    def workspace = env.WORKSPACE ?: '.'
+                    sh """
+                        docker run --rm \\
+                          -e SONAR_HOST_URL=${params.SONAR_HOST_URL} \\
+                          -e SONAR_LOGIN=${SONAR_TOKEN} \\
+                          -v "${workspace}":/usr/src \\
+                          sonarsource/sonar-scanner-cli \\
+                          -Dsonar.projectKey=${params.APP_NAME} \\
+                          -Dsonar.sources=src
+                    """
+                }
             }
         }
 
