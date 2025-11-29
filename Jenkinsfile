@@ -12,8 +12,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "${params.APP_NAME}:${env.BUILD_NUMBER}"
         SONAR_TOKEN = credentials('sonarqube-token')
-        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        AWS_CREDS = credentials('s3-access-user') // Jenkins username/password credential (access key / secret)
     }
 
     stages {
@@ -51,8 +50,8 @@ pipeline {
                       -e AWS_REGION=${params.AWS_REGION} \\
                       -e S3_BUCKET=${params.S3_BUCKET} \\
                       -e S3_KEY=${params.S3_KEY} \\
-                      -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \\
-                      -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \\
+                      -e AWS_ACCESS_KEY_ID=${AWS_CREDS_USR} \\
+                      -e AWS_SECRET_ACCESS_KEY=${AWS_CREDS_PSW} \\
                       ${DOCKER_IMAGE}
                 """
             }
