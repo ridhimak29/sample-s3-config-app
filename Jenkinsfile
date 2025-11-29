@@ -12,18 +12,17 @@ pipeline {
     environment {
         DOCKER_IMAGE = "${params.APP_NAME}:${env.BUILD_NUMBER}"
         SONAR_TOKEN = credentials('sonarqube-token')
-        AWS_CREDS = credentials('s3-access-user') // Jenkins username/password credential (access key / secret)
     }
 
     stages {
         stage('Build Node App') {
             steps {
-                script {
-                    docker.image('node:18-alpine').inside('-u root') {
-                        sh 'npm install'
-                        sh 'npm run build --if-present'
-                    }
-                }
+                sh """
+                    docker run --rm -u root \\
+                      -v "$PWD":/app -w /app \\
+                      node:18-alpine \\
+                      sh -c "npm install && npm run build --if-present"
+                """
             }
         }
 
@@ -47,17 +46,22 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                sh """
-                    docker rm -f ${params.APP_NAME} || true
-                    docker run -d --name ${params.APP_NAME} -p ${params.APP_PORT}:${params.APP_PORT} \\
-                      -e PORT=${params.APP_PORT} \\
-                      -e AWS_REGION=${params.AWS_REGION} \\
-                      -e S3_BUCKET=${params.S3_BUCKET} \\
-                      -e S3_KEY=${params.S3_KEY} \\
-                      -e AWS_ACCESS_KEY_ID=${AWS_CREDS_USR} \\
-                      -e AWS_SECRET_ACCESS_KEY=${AWS_CREDS_PSW} \\
-                      ${DOCKER_IMAGE}
-                """
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: 's3-access-user',
+                                  accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh """
+                        docker rm -f ${params.APP_NAME} || true
+                        docker run -d --name ${params.APP_NAME} -p ${params.APP_PORT}:${params.APP_PORT} \\
+                          -e PORT=${params.APP_PORT} \\
+                          -e AWS_REGION=${params.AWS_REGION} \\
+                          -e S3_BUCKET=${params.S3_BUCKET} \\
+                          -e S3_KEY=${params.S3_KEY} \\
+                          -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \\
+                          -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \\
+                          ${DOCKER_IMAGE}
+                    """
+                }
             }
         }
     }
