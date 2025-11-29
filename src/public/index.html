@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S3 Config Viewer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fa;
+        margin: 0;
+        padding: 40px;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 800px;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      th,
+      td {
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        text-align: left;
+      }
+      th {
+        background: #f0f0f5;
+      }
+      #status {
+        margin-bottom: 20px;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>S3 Configuration</h1>
+    <div id="status">Loading config…</div>
+    <table id="config-table" hidden>
+      <thead>
+        <tr id="table-header"></tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+
+    <script>
+      async function loadConfig() {
+        const status = document.getElementById('status');
+        const table = document.getElementById('config-table');
+        const headerRow = document.getElementById('table-header');
+        const body = document.getElementById('table-body');
+
+        try {
+          const response = await fetch('/api/config');
+          const json = await response.json();
+          const data = json.data || [];
+
+          if (data.length === 0) {
+            status.textContent = 'No config data available. Check S3 or server logs.';
+            return;
+          }
+
+          const columns = Object.keys(data[0]);
+          headerRow.innerHTML = '';
+          columns.forEach((column) => {
+            const th = document.createElement('th');
+            th.textContent = column;
+            headerRow.appendChild(th);
+          });
+
+          body.innerHTML = '';
+          data.forEach((row) => {
+            const tr = document.createElement('tr');
+            columns.forEach((column) => {
+              const td = document.createElement('td');
+              const value = row[column];
+              td.textContent =
+                value !== null && typeof value === 'object'
+                  ? JSON.stringify(value)
+                  : value;
+              tr.appendChild(td);
+            });
+            body.appendChild(tr);
+          });
+
+          table.hidden = false;
+          status.textContent = `Loaded ${data.length} rows.`;
+        } catch (error) {
+          status.textContent = 'Failed to load config. Check console/logs.';
+          console.error('Error fetching config', error);
+        }
+      }
+
+      loadConfig();
+    </script>
+  </body>
+</html>

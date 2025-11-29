@@ -1,0 +1,12 @@
+{
+  "name": "sample-s3-config-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.583.0",
+    "express": "^4.19.2"
+  }
+}
